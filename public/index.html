@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trigger Email</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 90vh;
+            box-sizing: border-box;
+        }
+
+        .form-container {
+            background-color: white;
+            padding: 40px 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            text-align: center;
+        }
+
+        button#sendBtn {
+            width: 100%;
+            padding: 18px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 18px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button#sendBtn:hover {
+            background-color: #0056b3;
+        }
+
+        button#sendBtn:active {
+            background-color: #004494;
+        }
+
+        #formattedOutput {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            font-family: monospace;
+            word-break: break-all;
+            display: none;
+            text-align: left;
+        }
+
+        .error-message {
+            margin-top: 15px;
+            color: red;
+            display: none;
+            font-size: 14px;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            .form-container {
+                padding: 30px 15px;
+            }
+
+            button#sendBtn {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <button id="sendBtn">Trigger Save as PDF</button>
+        <div id="formattedOutput"></div>
+        <div id="errorMessage" class="error-message"></div>
+    </div>
+
+    <script>
+        function getLocalToday() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            return `${year}${month}${day}`;
+        }
+
+        function getRoundedTime() {
+            const now = new Date();
+            let hours = now.getHours();
+            let minutes = now.getMinutes();
+            if (hours === 24) hours = 0;
+            return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+        }
+
+        document.getElementById('sendBtn').addEventListener('click', async () => {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.style.display = 'none';
+
+            const formattedDate = getLocalToday();
+            const formattedTime = getRoundedTime();
+            const title = 'Send Links back as Email';
+
+            const formattedString = `${formattedDate},${formattedTime},${title}`;
+
+            const outputDiv = document.getElementById('formattedOutput');
+            outputDiv.style.display = 'block';
+            outputDiv.textContent = "Sending: " + formattedString;
+
+            console.log(formattedString);
+
+            const formData = { message: formattedString };
+
+            try {
+                const response = await fetch('/.netlify/functions/send-email', {
+                    method: 'POST',
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Message sent successfully!');
+                } else {
+                    errorDiv.textContent = data.error || 'Server error: ' + response.status;
+                    errorDiv.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                errorDiv.textContent = 'Connection error: ' + error.message;
+                errorDiv.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
